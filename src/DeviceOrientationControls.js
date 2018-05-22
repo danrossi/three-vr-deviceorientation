@@ -8,7 +8,7 @@
 import { Vector3 } from '../../three.js/src/math/Vector3';
 import { Euler } from '../../three.js/src/math/Euler';
 import { Quaternion } from '../../three.js/src/math/Quaternion';
-import { Math } from '../../three.js/src/math/Math';
+import { _Math } from '../../three.js/src/math/Math';
 
 
 class DeviceOrientationControls {
@@ -79,10 +79,10 @@ class DeviceOrientationControls {
 
 		if ( device ) {
 
-			const alpha = device.alpha ? Math.degToRad( device.alpha ) + scope.alphaOffset : 0, // Z
-			beta = device.beta ? Math.degToRad( device.beta ) : 0, // X'
-			gamma = device.gamma ? Math.degToRad( device.gamma ) : 0, // Y''
-			orient = scope.screenOrientation ? Math.degToRad( scope.screenOrientation ) : 0, // O
+			const alpha = device.alpha ? _Math.degToRad( device.alpha ) + scope.alphaOffset : 0, // Z
+			beta = device.beta ? _Math.degToRad( device.beta ) : 0, // X'
+			gamma = device.gamma ? _Math.degToRad( device.gamma ) : 0, // Y''
+			orient = scope.screenOrientation ? _Math.degToRad( scope.screenOrientation ) : 0; // O
 
 			this.setObjectQuaternion( this.object.quaternion, alpha, beta, gamma, orient );
 		}

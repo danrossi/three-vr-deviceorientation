@@ -61,7 +61,7 @@ class DeviceOrientationControls {
 		this.enabled = true;
 	}
 
-	static hasSensor() {
+	static get hasSensor() {
 		return "RelativeOrientationSensor" in window;
 	}
 
@@ -116,7 +116,7 @@ class DeviceOrientationControls {
 			this.screenOrientation = window.orientation || 0;
 
 			//fix for chrome bug
-			this.screenOrientation = screen.orientation.type.indexOf("landscape") > -1 && !this.screenOrientation ?
+			this.screenOrientation = screen.orientation && screen.orientation.type.indexOf("landscape") > -1 && !this.screenOrientation ?
 			90 : this.screenOrientation;
 		};
 

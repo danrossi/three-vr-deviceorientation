@@ -10,15 +10,14 @@ import { Euler } from '../../three.js/src/math/Euler';
 import { Quaternion } from '../../three.js/src/math/Quaternion';
 import { MathUtils } from '../../three.js/src/math/MathUtils';
 
+
 const _sensorQ = new Quaternion(),
 _outQ = new Quaternion(),
-_out = new Float32Array(4);
+_out = new Float32Array(4),
+X_AXIS = new Vector3(1, 0, 0),
+Z_AXIS = new Vector3(0, 0, 1),
+SENSOR_TO_VR = new Quaternion();
 
-
-const X_AXIS = new Vector3(1, 0, 0);
-const Z_AXIS = new Vector3(0, 0, 1);
-
-const SENSOR_TO_VR = new Quaternion();
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
 SENSOR_TO_VR.multiply(new Quaternion().setFromAxisAngle(Z_AXIS, Math.PI / 2));
 
@@ -69,7 +68,7 @@ class DeviceOrientationControls {
 	initOrientationSensor() {
 
 		if (DeviceOrientationControls.hasSensor) {
-			const options = { frequency: 60, referenceFrame: 'device' };
+			const options = { frequency: 60, referenceFrame: 'screen' };
 			const sensor = this.sensor = new RelativeOrientationSensor(options);
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
 			             navigator.permissions.query({ name: "gyroscope" })])
@@ -83,11 +82,14 @@ class DeviceOrientationControls {
 			          
 			         } else {
 			           console.log("No permissions to use RelativeOrientationSensor.");
+			           this.useDeviceOrientation();
 			         }
 			   });
 		} else {
-			this.useDeviceMotion();
+			this.useDeviceOrientation();
 		}
+
+		
 
 
 	}
@@ -109,9 +111,13 @@ class DeviceOrientationControls {
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
 	}
 
-	useDeviceMotion() {
+	useDeviceOrientation() {
 		this.onScreenOrientationChangeRef = (e) => {
 			this.screenOrientation = window.orientation || 0;
+
+			//fix for chrome bug
+			this.screenOrientation = screen.orientation.type.indexOf("landscape") > -1 && !this.screenOrientation ?
+			90 : this.screenOrientation;
 		};
 
 		this.onDeviceOrientationChangeRef = (e) => {
@@ -120,8 +126,29 @@ class DeviceOrientationControls {
 
 		this.onScreenOrientationChangeRef();
 
-		window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-		window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+		if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+
+			window.DeviceOrientationEvent.requestPermission().then( function ( response ) {
+
+				if ( response == 'granted' ) {
+
+					window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
+					window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+
+				}
+
+			} ).catch( function ( error ) {
+
+				console.error( 'THREE.DeviceOrientationControls: Unable to use DeviceOrientation API:', error );
+
+			} );
+
+		} else {
+
+			window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
+			window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+
+		}
 
 	}
 
@@ -154,10 +181,10 @@ class DeviceOrientationControls {
 
 		if ( device ) {
 
-			const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + scope.alphaOffset : 0, // Z
+			const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
 			beta = device.beta ? MathUtils.degToRad( device.beta ) : 0, // X'
 			gamma = device.gamma ? MathUtils.degToRad( device.gamma ) : 0, // Y''
-			orient = scope.screenOrientation ? MathUtils.degToRad( scope.screenOrientation ) : 0; // O
+			orient = this.screenOrientation ? MathUtils.degToRad( this.screenOrientation ) : 0; // O
 
 			this.setObjectQuaternion( this.object.quaternion, alpha, beta, gamma, orient );
 		}

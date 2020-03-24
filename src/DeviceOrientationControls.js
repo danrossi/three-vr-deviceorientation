@@ -22,6 +22,9 @@ SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
 SENSOR_TO_VR.multiply(new Quaternion().setFromAxisAngle(Z_AXIS, Math.PI / 2));
 
 
+let _onSensorReadRef;
+
+
 class DeviceOrientationControls {
 
 	constructor(object) {
@@ -74,12 +77,10 @@ class DeviceOrientationControls {
 			             navigator.permissions.query({ name: "gyroscope" })])
 			       .then(results => {
 			         if (results.every(result => result.state === "granted")) {
-			           sensor.start();
-
-			           this.onSensorReadRef = () => this.onSensorRead();
-
-			           sensor.addEventListener('reading', this.onSensorReadRef);
-			          
+			           this,sensor.start();
+			           _onSensorReadRef = () => this.onSensorRead();
+					   this.sensor.addEventListener('reading', _onSensorReadRef);
+			           
 			         } else {
 			           console.log("No permissions to use RelativeOrientationSensor.");
 			           this.useDeviceOrientation();
@@ -111,6 +112,10 @@ class DeviceOrientationControls {
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
 	}
 
+	static get requireOrientationPermission() {
+		return window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function';
+	}
+
 	useDeviceOrientation() {
 		this.onScreenOrientationChangeRef = (e) => {
 			this.screenOrientation = window.orientation || 0;
@@ -126,9 +131,9 @@ class DeviceOrientationControls {
 
 		this.onScreenOrientationChangeRef();
 
-		if ( window.DeviceOrientationEvent !== undefined && typeof window.DeviceOrientationEvent.requestPermission === 'function' ) {
+		if ( DeviceOrientationControls.requireOrientationPermission ) {
 
-			window.DeviceOrientationEvent.requestPermission().then( function ( response ) {
+			window.DeviceOrientationEvent.requestPermission().then( ( response ) => {
 
 				if ( response == 'granted' ) {
 
@@ -154,18 +159,18 @@ class DeviceOrientationControls {
 
 	disconnect() {
 
+		this.enabled = false;
+
 		if (this.sensor) {
 			this.sensor.stop();
-			this.sensor.addEventListener('reading', this.onSensorReadRef);
-			this.onSensorReadRef = null;
+			this.sensor.removeEventListener('reading', _onSensorReadRef);
+			_onSensorReadRef = null;
 			this.sensor = null;
 			return;
 		}
 
 		window.removeEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
 		window.removeEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
-
-		this.enabled = false;
 
 	}
 

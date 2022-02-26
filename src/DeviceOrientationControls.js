@@ -8,7 +8,7 @@
 import { Vector3 } from '../../three.js/src/math/Vector3';
 import { Euler } from '../../three.js/src/math/Euler';
 import { Quaternion } from '../../three.js/src/math/Quaternion';
-import { MathUtils } from '../../three.js/src/math/MathUtils';
+import * as MathUtils from '../../three.js/src/math/MathUtils';
 
 
 const _sensorQ = new Quaternion(),
@@ -18,8 +18,14 @@ X_AXIS = new Vector3(1, 0, 0),
 Z_AXIS = new Vector3(0, 0, 1),
 SENSOR_TO_VR = new Quaternion();
 
+
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
 SENSOR_TO_VR.multiply(new Quaternion().setFromAxisAngle(Z_AXIS, Math.PI / 2));
+
+const zee = new Vector3( 0, 0, 1 ),
+euler = new Euler(),
+q0 = new Quaternion(),
+q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
 
 
 let _onSensorReadRef;
@@ -43,12 +49,9 @@ class DeviceOrientationControls {
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
 
-	setObjectQuaternion(quaternion, alpha, beta, gamma, orient ) {
 
-		const zee = new Vector3( 0, 0, 1 ),
-		euler = new Euler(),
-		q0 = new Quaternion(),
-		q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
+
+	setObjectQuaternion(quaternion, alpha, beta, gamma, orient ) {
 
 		euler.set( beta, alpha, - gamma, 'YXZ' ); // 'ZXY' for the device, but 'YXZ' for us
 
@@ -107,6 +110,8 @@ class DeviceOrientationControls {
 		_out[1] = out.y;
 		_out[2] = out.z;
 		_out[3] = out.w;
+
+		//console.log("sensor", _out);
 
 		this.object.quaternion.fromArray(_out);
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
@@ -201,3 +206,4 @@ class DeviceOrientationControls {
 }
 
 export { DeviceOrientationControls };
+

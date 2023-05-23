@@ -1,17 +1,11 @@
+import { Quaternion, Vector3, Euler, MathUtils } from 'three';
+
 /**
  * @author richt / http://richt.me
  * @author WestLangley / http://github.com/WestLangley
  *
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
-
-
-import {
-	MathUtils,
-	Quaternion,
-	Euler,
-	Vector3
-} from 'three';
 
 const _sensorQ = new Quaternion(),
 _outQ = new Quaternion(),
@@ -33,7 +27,7 @@ q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 aro
 let _onSensorReadRef;
 
 
-export default class DeviceOrientationControls {
+class DeviceOrientationControls {
 
 	constructor(object) {
 		this.object = object;
@@ -82,7 +76,7 @@ export default class DeviceOrientationControls {
 			             navigator.permissions.query({ name: "gyroscope" })])
 			       .then(results => {
 			         if (results.every(result => result.state === "granted")) {
-			           this,sensor.start();
+			           sensor.start();
 			           _onSensorReadRef = () => this.onSensorRead();
 					   this.sensor.addEventListener('reading', _onSensorReadRef);
 			           
@@ -207,3 +201,4 @@ export default class DeviceOrientationControls {
 	}
 }
 
+export { DeviceOrientationControls };

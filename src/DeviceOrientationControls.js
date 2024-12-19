@@ -117,7 +117,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 
 	detectOrientationError() {
 		setTimeout(() => {
-			if (!this.deviceOrientation) this.dispatchEvent({ type: "error" });
+			if (!this.deviceOrientation.alpha) this.dispatchEvent({ type: "error" });
 		}, 2000);
 	}
 

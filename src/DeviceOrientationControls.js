@@ -20,12 +20,13 @@ _out = new Float32Array(4),
 X_AXIS = new Vector3(1, 0, 0),
 Z_AXIS = new Vector3(0, 0, 1),
 SENSOR_TO_VR = new Quaternion(),
-EPS = 0.000001,
-lastQuaternion = new THREE.Quaternion(),
 deviceOrientationEventName =
               "ondeviceorientationabsolute" in window
             ? "deviceorientationabsolute"
             : "deviceorientation";
+
+//EPS = 0.000001,
+//lastQuaternion = new THREE.Quaternion(),
 
 
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);

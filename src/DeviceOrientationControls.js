@@ -7,6 +7,7 @@
 
 
 import {
+	EventDispatcher,
 	MathUtils,
 	Quaternion,
 	Euler,
@@ -40,9 +41,10 @@ q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 aro
 let _onSensorReadRef;
 
 
-export default class DeviceOrientationControls {
+export default class DeviceOrientationControls extends EventDispatcher {
 
 	constructor(object) {
+		super();
 		this.object = object;
 		this.object.rotation.reorder( 'YXZ' );
 
@@ -53,7 +55,7 @@ export default class DeviceOrientationControls {
 
 		this.alphaOffset = 0; // radians
 
-		this.connect();
+		//this.connect();
 	}
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
@@ -91,6 +93,7 @@ export default class DeviceOrientationControls {
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
 			             navigator.permissions.query({ name: "gyroscope" })])
 			       .then(results => {
+					//console.log("results ", results);
 			         if (results.every(result => result.state === "granted")) {
 			           this,sensor.start();
 			           _onSensorReadRef = () => this.onSensorRead();
@@ -99,6 +102,7 @@ export default class DeviceOrientationControls {
 			         } else {
 			           console.log("No permissions to use RelativeOrientationSensor.");
 			           this.useDeviceOrientation();
+					   this.detectOrientationError();
 			         }
 			   });
 		} else {
@@ -108,6 +112,12 @@ export default class DeviceOrientationControls {
 		
 
 
+	}
+
+	detectOrientationError() {
+		setTimeout(() => {
+			if (!this.deviceOrientation) this.dispatchEvent({ type: "error" });
+		}, 2000);
 	}
 
 	onSensorRead() {
@@ -144,6 +154,8 @@ export default class DeviceOrientationControls {
 
 		this.onDeviceOrientationChangeRef = (e) => {
 			this.deviceOrientation = e;
+
+			//console.log("device ", this.deviceOrientation);
 		};
 
 		this.onScreenOrientationChangeRef();
@@ -162,6 +174,8 @@ export default class DeviceOrientationControls {
 			} ).catch( function ( error ) {
 
 				console.error( 'THREE.DeviceOrientationControls: Unable to use DeviceOrientation API:', error );
+
+				this.dispatchEvent({ type: "error" });
 
 			} );
 
@@ -212,11 +226,14 @@ export default class DeviceOrientationControls {
 				  : device.alpha || 0) + this.alphaOffset
 			  : 0, // Z
 
+			
 
 			//const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
 			beta = device.beta ? MathUtils.degToRad( device.beta ) : 0, // X'
 			gamma = device.gamma ? MathUtils.degToRad( device.gamma ) : 0, // Y''
 			orient = this.screenOrientation ? MathUtils.degToRad( this.screenOrientation ) : 0; // O
+
+			//console.log("alpha", alpha);
 
 			this.setObjectQuaternion( this.object.quaternion, alpha, beta, gamma, orient );
 

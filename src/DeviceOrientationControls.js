@@ -18,7 +18,13 @@ _outQ = new Quaternion(),
 _out = new Float32Array(4),
 X_AXIS = new Vector3(1, 0, 0),
 Z_AXIS = new Vector3(0, 0, 1),
-SENSOR_TO_VR = new Quaternion();
+SENSOR_TO_VR = new Quaternion(),
+EPS = 0.000001,
+lastQuaternion = new THREE.Quaternion(),
+deviceOrientationEventName =
+              "ondeviceorientationabsolute" in window
+            ? "deviceorientationabsolute"
+            : "deviceorientation";
 
 
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
@@ -29,6 +35,7 @@ euler = new Euler(),
 q0 = new Quaternion(),
 q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
 
+//const ALPHA_SENSITIVITY = 0.008;
 
 let _onSensorReadRef;
 
@@ -61,7 +68,10 @@ export default class DeviceOrientationControls {
 		quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
 		quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
 
+		
 	}
+
+	
 
 	connect() {
 		this.initOrientationSensor();
@@ -145,7 +155,7 @@ export default class DeviceOrientationControls {
 				if ( response == 'granted' ) {
 
 					window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-					window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+					window.addEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 				}
 
@@ -158,7 +168,7 @@ export default class DeviceOrientationControls {
 		} else {
 
 			window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-			window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+			window.addEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 		}
 
@@ -177,7 +187,7 @@ export default class DeviceOrientationControls {
 		}
 
 		window.removeEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-		window.removeEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+		window.removeEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 	}
 
@@ -192,13 +202,30 @@ export default class DeviceOrientationControls {
 		const device = this.deviceOrientation;
 
 		if ( device ) {
+			//IOS alpha compass fix
+			const heading = device.webkitCompassHeading || device.compassHeading;
+        
+			const alpha = device.alpha || heading
+			  ? MathUtils.degToRad(
+				  heading  
+				  ? 360 - heading
+				  : device.alpha || 0) + this.alphaOffset
+			  : 0, // Z
 
-			const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
+
+			//const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
 			beta = device.beta ? MathUtils.degToRad( device.beta ) : 0, // X'
 			gamma = device.gamma ? MathUtils.degToRad( device.gamma ) : 0, // Y''
 			orient = this.screenOrientation ? MathUtils.degToRad( this.screenOrientation ) : 0; // O
 
 			this.setObjectQuaternion( this.object.quaternion, alpha, beta, gamma, orient );
+
+			/*if ( 8 * ( 1 - lastQuaternion.dot( this.object.quaternion ) ) > EPS ) {
+
+				lastQuaternion.copy( scope.object.quaternion );
+				scope.dispatchEvent( _changeEvent );
+		
+			}*/
 		}
 	}
 
@@ -207,3 +234,16 @@ export default class DeviceOrientationControls {
 	}
 }
 
+/*
+ const currentQuaternion = new THREE.Quaternion()
+      setObjectQuaternion(currentQuaternion, alpha, beta, gamma, orient)
+
+      // Extract the Euler angles from the quaternion and add the heading angle to the Y-axis rotation of the Euler angles
+      const currentEuler = new THREE.Euler().setFromQuaternion(currentQuaternion, 'YXZ')
+      console.log(currentEuler.x, currentEuler.y, currentEuler.z)
+      
+      // Replace the current alpha value of the Euler angles and reset the quaternion
+      currentEuler.y = THREE.MathUtils.degToRad(360 - device.webkitCompassHeading)
+      currentQuaternion.setFromEuler(currentEuler)
+      scope.object.quaternion.copy(currentQuaternion)
+*/

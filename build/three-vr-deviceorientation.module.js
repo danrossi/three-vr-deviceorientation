@@ -1,4 +1,4 @@
-import { Quaternion, Vector3, Euler, MathUtils } from 'three';
+import { Quaternion, Vector3, Euler, EventDispatcher, MathUtils } from 'three';
 
 /**
  * @author richt / http://richt.me
@@ -13,6 +13,11 @@ _out = new Float32Array(4),
 X_AXIS = new Vector3(1, 0, 0),
 Z_AXIS = new Vector3(0, 0, 1),
 SENSOR_TO_VR = new Quaternion();
+new THREE.Quaternion();
+const deviceOrientationEventName =
+              "ondeviceorientationabsolute" in window
+            ? "deviceorientationabsolute"
+            : "deviceorientation";
 
 
 SENSOR_TO_VR.setFromAxisAngle(X_AXIS, -Math.PI / 2);
@@ -23,13 +28,15 @@ euler = new Euler(),
 q0 = new Quaternion(),
 q1 = new Quaternion( - Math.sqrt( 0.5 ), 0, 0, Math.sqrt( 0.5 ) ); // - PI/2 around the x-axis
 
+//const ALPHA_SENSITIVITY = 0.008;
 
 let _onSensorReadRef;
 
 
-class DeviceOrientationControls {
+class DeviceOrientationControls extends EventDispatcher {
 
 	constructor(object) {
+		super();
 		this.object = object;
 		this.object.rotation.reorder( 'YXZ' );
 
@@ -40,7 +47,7 @@ class DeviceOrientationControls {
 
 		this.alphaOffset = 0; // radians
 
-		this.connect();
+		//this.connect();
 	}
 
 	// The angles alpha, beta and gamma form a set of intrinsic Tait-Bryan angles of type Z-X'-Y''
@@ -55,7 +62,10 @@ class DeviceOrientationControls {
 		quaternion.multiply( q1 ); // camera looks out the back of the device, not the top
 		quaternion.multiply( q0.setFromAxisAngle( zee, - orient ) ); // adjust for screen orientation
 
+		
 	}
+
+	
 
 	connect() {
 		this.initOrientationSensor();
@@ -75,6 +85,7 @@ class DeviceOrientationControls {
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
 			             navigator.permissions.query({ name: "gyroscope" })])
 			       .then(results => {
+					//console.log("results ", results);
 			         if (results.every(result => result.state === "granted")) {
 			           sensor.start();
 			           _onSensorReadRef = () => this.onSensorRead();
@@ -83,6 +94,7 @@ class DeviceOrientationControls {
 			         } else {
 			           console.log("No permissions to use RelativeOrientationSensor.");
 			           this.useDeviceOrientation();
+					   this.detectOrientationError();
 			         }
 			   });
 		} else {
@@ -92,6 +104,12 @@ class DeviceOrientationControls {
 		
 
 
+	}
+
+	detectOrientationError() {
+		setTimeout(() => {
+			if (!this.deviceOrientation) this.dispatchEvent({ type: "error" });
+		}, 2000);
 	}
 
 	onSensorRead() {
@@ -128,6 +146,8 @@ class DeviceOrientationControls {
 
 		this.onDeviceOrientationChangeRef = (e) => {
 			this.deviceOrientation = e;
+
+			//console.log("device ", this.deviceOrientation);
 		};
 
 		this.onScreenOrientationChangeRef();
@@ -139,7 +159,7 @@ class DeviceOrientationControls {
 				if ( response == 'granted' ) {
 
 					window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-					window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+					window.addEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 				}
 
@@ -147,12 +167,14 @@ class DeviceOrientationControls {
 
 				console.error( 'THREE.DeviceOrientationControls: Unable to use DeviceOrientation API:', error );
 
+				this.dispatchEvent({ type: "error" });
+
 			} );
 
 		} else {
 
 			window.addEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-			window.addEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+			window.addEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 		}
 
@@ -171,7 +193,7 @@ class DeviceOrientationControls {
 		}
 
 		window.removeEventListener( 'orientationchange', this.onScreenOrientationChangeRef, false );
-		window.removeEventListener( 'deviceorientation', this.onDeviceOrientationChangeRef, false );
+		window.removeEventListener( deviceOrientationEventName, this.onDeviceOrientationChangeRef, false );
 
 	}
 
@@ -186,13 +208,33 @@ class DeviceOrientationControls {
 		const device = this.deviceOrientation;
 
 		if ( device ) {
+			//IOS alpha compass fix
+			const heading = device.webkitCompassHeading || device.compassHeading;
+        
+			const alpha = device.alpha || heading
+			  ? MathUtils.degToRad(
+				  heading  
+				  ? 360 - heading
+				  : device.alpha || 0) + this.alphaOffset
+			  : 0, // Z
 
-			const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
+			
+
+			//const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
 			beta = device.beta ? MathUtils.degToRad( device.beta ) : 0, // X'
 			gamma = device.gamma ? MathUtils.degToRad( device.gamma ) : 0, // Y''
 			orient = this.screenOrientation ? MathUtils.degToRad( this.screenOrientation ) : 0; // O
 
+			//console.log("alpha", alpha);
+
 			this.setObjectQuaternion( this.object.quaternion, alpha, beta, gamma, orient );
+
+			/*if ( 8 * ( 1 - lastQuaternion.dot( this.object.quaternion ) ) > EPS ) {
+
+				lastQuaternion.copy( scope.object.quaternion );
+				scope.dispatchEvent( _changeEvent );
+		
+			}*/
 		}
 	}
 
@@ -200,5 +242,19 @@ class DeviceOrientationControls {
 		this.disconnect();
 	}
 }
+
+/*
+ const currentQuaternion = new THREE.Quaternion()
+      setObjectQuaternion(currentQuaternion, alpha, beta, gamma, orient)
+
+      // Extract the Euler angles from the quaternion and add the heading angle to the Y-axis rotation of the Euler angles
+      const currentEuler = new THREE.Euler().setFromQuaternion(currentQuaternion, 'YXZ')
+      console.log(currentEuler.x, currentEuler.y, currentEuler.z)
+      
+      // Replace the current alpha value of the Euler angles and reset the quaternion
+      currentEuler.y = THREE.MathUtils.degToRad(360 - device.webkitCompassHeading)
+      currentQuaternion.setFromEuler(currentEuler)
+      scope.object.quaternion.copy(currentQuaternion)
+*/
 
 export { DeviceOrientationControls };

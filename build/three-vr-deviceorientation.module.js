@@ -71,7 +71,6 @@ class DeviceOrientationControls extends EventDispatcher {
 
 
 	connect() {
-		this.originalRotation = this.object.quaternion.clone();
 		this.initOrientationSensor();
 
 		this.enabled = true;
@@ -83,7 +82,7 @@ class DeviceOrientationControls extends EventDispatcher {
 
 	initOrientationSensor() {
 
-		/*if (DeviceOrientationControls.hasSensor) {
+		if (DeviceOrientationControls.hasSensor) {
 			const options = { frequency: 60, referenceFrame: 'screen' };
 			const sensor = this.sensor = new RelativeOrientationSensor(options);
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
@@ -91,7 +90,7 @@ class DeviceOrientationControls extends EventDispatcher {
 				.then(results => {
 					//console.log("results ", results);
 					if (results.every(result => result.state === "granted")) {
-						this, sensor.start();
+						sensor.start();
 						_onSensorReadRef = () => this.onSensorRead();
 						this.sensor.addEventListener('reading', _onSensorReadRef);
 
@@ -103,10 +102,7 @@ class DeviceOrientationControls extends EventDispatcher {
 				});
 		} else {
 			this.useDeviceOrientation();
-		}*/
-
-		this.useDeviceOrientation();
-
+		}
 
 
 

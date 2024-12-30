@@ -78,7 +78,6 @@ export default class DeviceOrientationControls extends EventDispatcher {
 
 
 	connect() {
-		this.originalRotation = this.object.quaternion.clone();
 		this.initOrientationSensor();
 
 		this.enabled = true;
@@ -90,7 +89,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 
 	initOrientationSensor() {
 
-		/*if (DeviceOrientationControls.hasSensor) {
+		if (DeviceOrientationControls.hasSensor) {
 			const options = { frequency: 60, referenceFrame: 'screen' };
 			const sensor = this.sensor = new RelativeOrientationSensor(options);
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
@@ -110,10 +109,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 				});
 		} else {
 			this.useDeviceOrientation();
-		}*/
-
-		this.useDeviceOrientation();
-
+		}
 
 
 

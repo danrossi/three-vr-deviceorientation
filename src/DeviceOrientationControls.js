@@ -67,10 +67,10 @@ export default class DeviceOrientationControls extends EventDispatcher {
 	setObjectQuaternion(quaternion, alpha, beta, gamma, orient) {
 
 		euler.set(beta, alpha, - gamma, 'YXZ'); // 'ZXY' for the device, but 'YXZ' for us
-		quaternion.copy(this.originalRotation);
-		deviceQuaternion.setFromEuler(euler);
-		quaternion.multiply(deviceQuaternion);
-		//quaternion.setFromEuler( euler ); // orient the device
+		//quaternion.copy(this.originalRotation);
+		//deviceQuaternion.setFromEuler(euler);
+		//quaternion.multiply(deviceQuaternion);
+		quaternion.setFromEuler( euler ); // orient the device
 		quaternion.multiply(q1); // camera looks out the back of the device, not the top
 		quaternion.multiply(q0.setFromAxisAngle(zee, - orient)); // adjust for screen orientation
 	}
@@ -144,8 +144,8 @@ export default class DeviceOrientationControls extends EventDispatcher {
 		_out[3] = out.w;
 
 		//console.log("sensor", _out);
-
-		this.object.quaternion.fromArray(_out).inverse();
+		this.object.quaternion.fromArray(_out);
+		//this.object.quaternion.fromArray(_out).inverse();
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
 	}
 

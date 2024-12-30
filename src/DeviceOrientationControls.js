@@ -90,7 +90,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 
 	initOrientationSensor() {
 
-		if (DeviceOrientationControls.hasSensor) {
+		/*if (DeviceOrientationControls.hasSensor) {
 			const options = { frequency: 60, referenceFrame: 'screen' };
 			const sensor = this.sensor = new RelativeOrientationSensor(options);
 			Promise.all([navigator.permissions.query({ name: "accelerometer" }),
@@ -110,7 +110,9 @@ export default class DeviceOrientationControls extends EventDispatcher {
 				});
 		} else {
 			this.useDeviceOrientation();
-		}
+		}*/
+
+		this.useDeviceOrientation();
 
 
 
@@ -123,14 +125,21 @@ export default class DeviceOrientationControls extends EventDispatcher {
 		}, 2000);
 	}
 
+	/*quaternionToHeading(q) {
+		let [x, y, z, w] = q;
+		let a = Math.atan2(2*x*y + 2*z*w, 1 - 2*y*y - 2*z*z)*(180/Math.PI);
+		if(a < 0) a = 360 + a;
+		return (360 - a).toFixed(1);
+	}*/
+
 	onSensorRead() {
 		const q = this.sensor.quaternion;
 		_sensorQ.set(q[0], q[1], q[2], q[3]);
 
 		const out = _outQ;
-		out.copy(this.originalRotation);
-		//out.copy(SENSOR_TO_VR);
-		out.multiply(SENSOR_TO_VR);
+		//out.copy(this.originalRotation);
+		out.copy(SENSOR_TO_VR);
+		//out.multiply(SENSOR_TO_VR);
 		out.multiply(_sensorQ);
 
 		_out[0] = out.x;
@@ -140,7 +149,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 
 		//console.log("sensor", _out);
 
-		this.object.quaternion.fromArray(_out);
+		this.object.quaternion.fromArray(_out).inverse();
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
 	}
 

@@ -39,7 +39,7 @@ let _onSensorReadRef;
 
 class DeviceOrientationControls extends EventDispatcher {
 
-	constructor(object) {
+	constructor(object, xAxisPos = 0.5) {
 		super();
 		this.object = object;
 		this.object.rotation.reorder('YXZ');
@@ -50,6 +50,9 @@ class DeviceOrientationControls extends EventDispatcher {
 		this.screenOrientation = 0;
 
 		this.alphaOffset = 0; // radians
+
+		//for 180 degrees this needs to be 0
+		this.xAxisPos = xAxisPos;
 
 		//this.connect();
 	}
@@ -66,7 +69,8 @@ class DeviceOrientationControls extends EventDispatcher {
 		//quaternion.multiply(deviceQuaternion);
 		quaternion.setFromEuler( euler ); // orient the device
 		quaternion.multiply(q1); // camera looks out the back of the device, not the top
-		quaternion.multiply(q0.setFromAxisAngle(zee, - orient)); // adjust for screen orientation
+		quaternion.multiply(q0.setFromAxisAngle(zee, orient)); // adjust for screen orientation
+		//quaternion.multiply(q0.setFromAxisAngle(zee, - orient)); // adjust for screen orientation
 	}
 
 
@@ -151,24 +155,26 @@ class DeviceOrientationControls extends EventDispatcher {
 
 	useDeviceOrientation() {
 		this.onScreenOrientationChangeRef = (e) => {
-			switch (screen.orientation.type) {
+			/*switch (screen.orientation.type) {
 					case "landscape-primary":
 						
 						this.screenOrientation = -90;
 					break;
 					default:
 						this.screenOrientation = 0;
-			}
+			}*/
 
 			//switch x coordinates for reverse landscape
 			switch (screen.orientation.type) {
 				case "landscape-secondary":
-					this.screenOrientation = 90;
-					q1._x = Math.sqrt(0.5);
+					//this.screenOrientation = 90;
+					q1._x = Math.sqrt(this.xAxisPos);
 				break;
 				default:
-					q1._x = -Math.sqrt(0.5);
+					q1._x = -Math.sqrt(this.xAxisPos);
 			}
+
+			this.screenOrientation = screen.orientation.angle;
 		};
 
 		this.onDeviceOrientationChangeRef = (e) => {

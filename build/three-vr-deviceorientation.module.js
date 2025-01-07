@@ -44,7 +44,7 @@ class DeviceOrientationControls extends EventDispatcher {
 		this.object = object;
 		this.object.rotation.reorder('YXZ');
 
-		this.enabled = true;
+		this.enabled = false;
 
 		this.deviceOrientation = {};
 		this.screenOrientation = 0;

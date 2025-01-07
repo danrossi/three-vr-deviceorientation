@@ -72,6 +72,8 @@ class DeviceOrientationControls extends EventDispatcher {
 
 
 	connect() {
+		this.originalRotation = this.object.quaternion.clone();
+
 		this.initOrientationSensor();
 
 		this.enabled = true;
@@ -149,11 +151,14 @@ class DeviceOrientationControls extends EventDispatcher {
 
 	useDeviceOrientation() {
 		this.onScreenOrientationChangeRef = (e) => {
-			this.screenOrientation = window.orientation || 0;
-
-			//fix for chrome bug
-			this.screenOrientation = screen.orientation && screen.orientation.type.indexOf("landscape") > -1 && !this.screenOrientation ?
-				90 : this.screenOrientation;
+			switch (screen.orientation.type) {
+					case "landscape-primary":
+						
+						this.screenOrientation = -90;
+					break;
+					default:
+						this.screenOrientation = 0;
+			}
 		};
 
 		this.onDeviceOrientationChangeRef = (e) => {
@@ -170,7 +175,7 @@ class DeviceOrientationControls extends EventDispatcher {
 
 				if (response == 'granted') {
 
-					window.addEventListener('orientationchange', this.onScreenOrientationChangeRef, false);
+					screen.orientation.addEventListener("change", this.onScreenOrientationChangeRef, false);
 					window.addEventListener(deviceOrientationEventName, this.onDeviceOrientationChangeRef, false);
 
 				}
@@ -185,7 +190,7 @@ class DeviceOrientationControls extends EventDispatcher {
 
 		} else {
 
-			window.addEventListener('orientationchange', this.onScreenOrientationChangeRef, false);
+			screen.orientation.addEventListener("change", this.onScreenOrientationChangeRef, false);
 			window.addEventListener(deviceOrientationEventName, this.onDeviceOrientationChangeRef, false);
 
 		}
@@ -201,11 +206,16 @@ class DeviceOrientationControls extends EventDispatcher {
 			this.sensor.removeEventListener('reading', _onSensorReadRef);
 			_onSensorReadRef = null;
 			this.sensor = null;
-			return;
+	
+		} else {
+			screen.orientation.removeEventListener("change", this.onScreenOrientationChangeRef, false);
+			window.removeEventListener(deviceOrientationEventName, this.onDeviceOrientationChangeRef, false);
 		}
 
-		window.removeEventListener('orientationchange', this.onScreenOrientationChangeRef, false);
-		window.removeEventListener(deviceOrientationEventName, this.onDeviceOrientationChangeRef, false);
+		//reset to original rotation
+		this.screenOrientation = 0;
+		this.deviceOrientation = null;
+		this.object.quaternion.copy(this.originalRotation);
 
 	}
 
@@ -234,9 +244,9 @@ class DeviceOrientationControls extends EventDispatcher {
 
 				//const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
 				const alpha = MathUtils.degToRad( device.alpha ) + this.alphaOffset, // Z
-				beta = device.beta ? MathUtils.degToRad(device.beta) : 0, // X'
-				gamma = device.gamma ? MathUtils.degToRad(device.gamma) : 0, // Y''
-				orient = this.screenOrientation ? MathUtils.degToRad(this.screenOrientation) : 0; // O
+				beta = MathUtils.degToRad(device.beta), // X'
+				gamma = MathUtils.degToRad(device.gamma), // Y''
+				orient = MathUtils.degToRad(this.screenOrientation); // O
 
 			//console.log("alpha", alpha);
 

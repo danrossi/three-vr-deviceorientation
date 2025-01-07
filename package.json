@@ -1,6 +1,6 @@
 {
     "name": "three-vr-deviceorientation",
-    "version": "0.171.9",
+    "version": "0.171.7",
     "description": "Three.js Omnitone Rotater",
     "main": "build/three-vr-omnitone.js",
     "module": "build/three-vr-omnitone.module.js",

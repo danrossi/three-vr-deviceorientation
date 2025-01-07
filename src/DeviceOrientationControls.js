@@ -166,6 +166,16 @@ export default class DeviceOrientationControls extends EventDispatcher {
 					default:
 						this.screenOrientation = 0;
 			}
+
+			//switch x coordinates for reverse landscape
+			switch (screen.orientation.type) {
+				case "landscape-secondary":
+					this.screenOrientation = 90;
+					q1._x = Math.sqrt(0.5);
+				break;
+				default:
+					q1._x = -Math.sqrt(0.5);
+			}
 		};
 
 		this.onDeviceOrientationChangeRef = (e) => {

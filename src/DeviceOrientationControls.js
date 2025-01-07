@@ -21,10 +21,11 @@ const _sensorQ = new Quaternion(),
 	X_AXIS = new Vector3(1, 0, 0),
 	Z_AXIS = new Vector3(0, 0, 1),
 	SENSOR_TO_VR = new Quaternion(),
-	deviceOrientationEventName =
+	deviceOrientationEventName = "deviceorientation";
+	/*deviceOrientationEventName =
 		"ondeviceorientationabsolute" in window
 			? "deviceorientationabsolute"
-			: "deviceorientation";
+			: "deviceorientation";*/
 
 //EPS = 0.000001,
 //lastQuaternion = new THREE.Quaternion(),
@@ -55,7 +56,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 		this.deviceOrientation = {};
 		this.screenOrientation = 0;
 
-		this.alphaOffset = 1; // radians
+		this.alphaOffset = 0; // radians
 
 		//this.connect();
 	}
@@ -229,16 +230,17 @@ export default class DeviceOrientationControls extends EventDispatcher {
 			//IOS alpha compass fix
 			const heading = device.webkitCompassHeading || device.compassHeading;
 
-			const alpha = device.alpha || heading
+			/*const alpha = device.alpha || heading
 				? MathUtils.degToRad(
 					heading
 						? 360 - heading
 						: device.alpha || 0) + this.alphaOffset
-				: 0, // Z
+				: 0, // Z*/
 
 
 
 				//const alpha = device.alpha ? MathUtils.degToRad( device.alpha ) + this.alphaOffset : 0, // Z
+				const alpha = MathUtils.degToRad( device.alpha ) + this.alphaOffset, // Z
 				beta = device.beta ? MathUtils.degToRad(device.beta) : 0, // X'
 				gamma = device.gamma ? MathUtils.degToRad(device.gamma) : 0, // Y''
 				orient = this.screenOrientation ? MathUtils.degToRad(this.screenOrientation) : 0; // O

@@ -37,7 +37,8 @@ SENSOR_TO_VR.multiply(new Quaternion().setFromAxisAngle(Z_AXIS, Math.PI / 2));
 const zee = new Vector3(0, 0, 1),
 	euler = new Euler(),
 	q0 = new Quaternion(),
-	q1 = new Quaternion(- Math.sqrt(0.5), 0, 0, Math.sqrt(0.5)); // - PI/2 around the x-axis
+	axisPos = Math.sqrt(0.5),
+	q1 = new Quaternion(- axisPos, 0, 0, axisPos); // - PI/2 around the x-axis
 
 //const ALPHA_SENSITIVITY = 0.008;
 
@@ -46,7 +47,7 @@ let _onSensorReadRef;
 
 export default class DeviceOrientationControls extends EventDispatcher {
 
-	constructor(object, xAxisPos = 0.5) {
+	constructor(object, alphaOffset = 0) {
 		super();
 		this.object = object;
 		this.object.rotation.reorder('YXZ');
@@ -56,10 +57,7 @@ export default class DeviceOrientationControls extends EventDispatcher {
 		this.deviceOrientation = {};
 		this.screenOrientation = 0;
 
-		this.alphaOffset = 0; // radians
-
-		//for 180 degrees this needs to be 0
-		this.xAxisPos = xAxisPos;
+		this.alphaOffset = alphaOffset; // radians
 
 		//this.connect();
 	}
@@ -175,10 +173,10 @@ export default class DeviceOrientationControls extends EventDispatcher {
 			switch (screen.orientation.type) {
 				case "landscape-secondary":
 					//this.screenOrientation = 90;
-					q1._x = Math.sqrt(this.xAxisPos);
+					q1._x = axisPos;
 				break;
 				default:
-					q1._x = -Math.sqrt(this.xAxisPos);
+					q1._x = -axisPos;
 			}
 
 			this.screenOrientation = screen.orientation.angle;

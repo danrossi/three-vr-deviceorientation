@@ -143,7 +143,8 @@ class DeviceOrientationControls extends EventDispatcher {
 
 		//console.log("sensor", _out);
 
-		this.object.quaternion.fromArray(_out).inverse();
+		this.object.quaternion.fromArray(_out);
+		//this.object.quaternion.fromArray(_out).inverse();
 		//this.object.quaternion.fromArray(this.sensor.quaternion);
 	}
 

@@ -7,6 +7,7 @@ import { Quaternion, Vector3, Euler, EventDispatcher, MathUtils } from 'three';
  * W3C Device Orientation control (http://w3c.github.io/deviceorientation/spec-source-orientation.html)
  */
 
+
 new Quaternion();
 const _sensorQ = new Quaternion(),
 	_outQ = new Quaternion(),

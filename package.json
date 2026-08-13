@@ -3,7 +3,7 @@
   "version": "0.172.6",
   "description": "Three.js Device Orientation",
   "module": "build/three-vr-deviceorientation.module.js",
-  "types": "./build/DeviceOrientationControls.d.ts",
+  "types": "./index.d.ts",
   "type": "module",
   "scripts": {
     "build": "vite build"
@@ -11,7 +11,7 @@
   "author": "danielr",
   "overrides": {
     "@microsoft/api-extractor": {
-      "typescript": "$typescript"
+      "typescript": "6.0.x"
     }
   },
   "devDependencies": {
